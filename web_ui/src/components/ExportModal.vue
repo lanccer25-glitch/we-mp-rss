@@ -10,7 +10,7 @@
       <a-form-item label="导出格式" field="format">
         <a-select v-model="form.format" placeholder="请选择导出格式" multiple>
           <a-option value="csv">Excel列表</a-option>
-          <a-option value="md">MarDown</a-option>
+          <a-option value="md">MarkDown</a-option>
           <a-option value="json">JSON附加信息</a-option>
           <a-option value="pdf">PDF归档</a-option>
           <a-option value="docx">WORD文档</a-option>
