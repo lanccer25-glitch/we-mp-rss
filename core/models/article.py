@@ -34,8 +34,8 @@ class Article(ArticleBase):
             'content_html': self.content_html,
             'status': self.status,
             'publish_time': self.publish_time,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at and hasattr(self.created_at, "isoformat") else self.created_at,
+            'updated_at': self.updated_at.isoformat() if self.updated_at and hasattr(self.updated_at, "isoformat") else self.updated_at,
             'is_export': self.is_export,
             'is_read': self.is_read
         }
