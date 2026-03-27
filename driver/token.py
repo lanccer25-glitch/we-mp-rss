@@ -3,7 +3,6 @@ from core.config import Config,cfg
 # 确保data目录和wx.lic文件存在
 import os
 import json
-
 from core.print import print_success, print_warning
 from core.redis_client import redis_client
 
@@ -46,6 +45,8 @@ def set_token(data:any,ext_data:any=None):
         _save_to_local(token_data)
 
     print_success(f"Token:{data.get('token')} \n到期时间:{data.get('expiry')['expiry_time']}\n")
+    from driver.success import setLockStatus
+    setLockStatus(False)
     from jobs.notice import sys_notice
 
 #     sys_notice(f"""WeRss授权成功

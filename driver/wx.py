@@ -10,7 +10,7 @@ from PIL import Image
 from .success import Success
 import time
 import os
-from driver.success import getStatus
+from driver.success import getStatus,getLockStatus,setLockStatus
 from driver.store import Store
 import re
 from threading import Timer, Lock
@@ -241,7 +241,11 @@ class Wx:
             if not getStatus():
                 print_warning("登录状态检查失败")
                 return None
-                
+            if getLockStatus():
+                print_warning("正在切换帐号,请稍后")
+                return None
+
+            setLockStatus(True)    
                 
             from driver.token import wx_cfg
             token = str(wx_cfg.get("token", ""))

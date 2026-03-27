@@ -14,6 +14,7 @@ import MessageTaskForm from '../views/MessageTaskForm.vue'
 import NovelReader from '../views/NovelReader.vue'
 import FilterRuleList from '../views/FilterRuleList.vue'
 import FilterRuleForm from '../views/FilterRuleForm.vue'
+import TaskQueueView from '../views/TaskQueueView.vue'
 
 const routes = [
   {
@@ -200,6 +201,15 @@ const routes = [
         meta: { 
           requiresAuth: true,
           permissions: ['wechat:manage'] 
+        }
+      },
+      {
+        path: 'task-queue',
+        name: 'TaskQueue',
+        component: TaskQueueView,
+        meta: { 
+          requiresAuth: true,
+          permissions: ['admin'] 
         }
       },
     ]

@@ -1,3 +1,5 @@
+from sqlalchemy.util import b
+
 from .token import set_token
 from core.print import print_warning,print_success
 from core.redis_client import redis_client
@@ -6,6 +8,7 @@ import json
 
 # 初始化全局变量（作为Redis不可用时的回退）
 WX_LOGIN_ED = True
+WX_LOCKED_STATUS = False
 WX_LOGIN_INFO = None
 
 import threading
@@ -15,6 +18,7 @@ login_lock = threading.Lock()
 
 # Redis key 常量
 REDIS_KEY_STATUS = "werss:login:status"
+REDIS_KEY_LOCK_STATUS = "werss:login:lock"
 
 def setStatus(status:bool):
     """设置登录状态，优先存储到Redis，失败则使用全局变量"""
@@ -28,7 +32,33 @@ def setStatus(status:bool):
     # 同时更新全局变量作为回退
     with login_lock:
         WX_LOGIN_ED = status
-
+def setLockStatus(status:bool):
+    """设置登录状态，优先存储到Redis，失败则使用全局变量"""
+    global WX_LOCKED_STATUS
+    # 尝试存储到Redis
+    if redis_client.is_connected:
+        try:
+            redis_client._client.set(REDIS_KEY_LOCK_STATUS, "1" if status else "0")
+        except Exception:
+            pass
+    # 同时更新全局变量作为回退
+    with login_lock:
+        WX_LOCKED_STATUS = status
+def getLockStatus():    
+    """获取登录状态，优先从Redis读取，失败则使用全局变量"""
+    global WX_LOCKED_STATUS
+    # 尝试从Redis读取
+    if redis_client.is_connected:
+        try:
+            val = redis_client._client.get(REDIS_KEY_LOCK_STATUS)
+            if val is not None:
+                return val == "1"
+        except Exception:
+            pass
+    # 回退到全局变量
+    with login_lock:
+        return WX_LOCKED_STATUS   
+         
 def getStatus():
     """获取登录状态，优先从Redis读取，失败则使用全局变量"""
     global WX_LOGIN_ED

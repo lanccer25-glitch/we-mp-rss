@@ -47,6 +47,12 @@
         </template>
         系统信息
       </a-menu-item>
+      <a-menu-item key="/task-queue">
+        <template #icon>
+          <icon-list />
+        </template>
+        任务队列
+      </a-menu-item>
       <a-menu-item key="/access-keys">
         <template #icon>
           <icon-key />

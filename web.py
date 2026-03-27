@@ -22,6 +22,7 @@ from apis.github_update import router as github_router
 from apis.cascade import router as cascade_router
 from apis.env_exception import router as env_exception_router
 from apis.filter_rule import router as filter_rule_router
+from apis.task_queue import router as task_queue_router
 from views import router as views_router
 import apis
 import os
@@ -95,6 +96,7 @@ api_router.include_router(github_router)
 api_router.include_router(cascade_router)
 api_router.include_router(env_exception_router)
 api_router.include_router(filter_rule_router)
+api_router.include_router(task_queue_router)
 
 resource_router = APIRouter(prefix="/static")
 resource_router.include_router(res_router)
