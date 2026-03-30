@@ -55,7 +55,7 @@
       </a-menu-item>
       <a-menu-item key="/access-keys">
         <template #icon>
-          <icon-key />
+          <icon-lock />
         </template>
         Access Key
       </a-menu-item>
