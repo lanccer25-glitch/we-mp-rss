@@ -17,29 +17,10 @@ from apis.message_task import router as task_router
 from apis.sys_info import router as sys_info_router
 from apis.tags import router as tags_router
 from apis.export import router as export_router
-from apis.tools import router as tools_router
-from apis.github_update import router as github_router
-from apis.cascade import router as cascade_router
-from apis.env_exception import router as env_exception_router
-from apis.filter_rule import router as filter_rule_router
-from apis.task_queue import router as task_queue_router
-from apis.proxy import router as proxy_router
-from views import router as views_router
+from apis.notion_sync import router as notion_sync_router
 import apis
 import os
 from core.config import cfg,VERSION,API_BASE
-from starlette.middleware.base import BaseHTTPMiddleware
-
-class AKMiddleware(BaseHTTPMiddleware):
-    """Access Key 认证中间件"""
-    async def dispatch(self, request: Request, call_next):
-        # 提取 Authorization 头
-        auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("AK-SK "):
-            # 将AK/SK认证信息存储在 request state 中供后续使用
-            request.state.ak_auth = auth_header
-        response = await call_next(request)
-        return response
 
 app = FastAPI(
     title="WeRSS API",
@@ -69,10 +50,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# AK认证中间件
-app.add_middleware(AKMiddleware)
-
 @app.middleware("http")
 async def add_custom_header(request: Request, call_next):
     response = await call_next(request)
@@ -92,13 +69,6 @@ api_router.include_router(task_router)
 api_router.include_router(sys_info_router)
 api_router.include_router(tags_router)
 api_router.include_router(export_router)
-api_router.include_router(tools_router)
-api_router.include_router(github_router)
-api_router.include_router(cascade_router)
-api_router.include_router(env_exception_router)
-api_router.include_router(filter_rule_router)
-api_router.include_router(task_queue_router)
-api_router.include_router(proxy_router)
 
 resource_router = APIRouter(prefix="/static")
 resource_router.include_router(res_router)
@@ -109,14 +79,13 @@ feeds_router.include_router(feed_router)
 app.include_router(api_router)
 app.include_router(resource_router)
 app.include_router(feeds_router)
-app.include_router(views_router)
+app.include_router(notion_sync_router)
 
 # 静态文件服务配置
 app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 from core.res.avatar import files_dir
 app.mount("/files", StaticFiles(directory=files_dir), name="files")
-# app.mount("/docs", StaticFiles(directory="./data/docs"), name="docs")
 @app.get("/{path:path}",tags=['默认'],include_in_schema=False)
 async def serve_vue_app(request: Request, path: str):
     """处理Vue应用路由"""

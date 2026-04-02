@@ -15,22 +15,55 @@
   <meta name="author" content="Rachel" />
   <script src="https://hm.baidu.com/hm.js?975de8724ac02eb7e6d2357bb95c067d"></script>
   <title>WeRss微信公众号订阅助手</title>
-  <script>
-    (function () {
-      var meta = document.createElement('meta')
-      meta.content = 'no-referrer'
-      meta.name = 'referrer'
-      document.getElementsByTagName('head')[0].appendChild(meta)
-    })()
-  </script>
-  <script type="module" crossorigin src="/assets/index.dfaa0e48.js"></script>
-  <link rel="stylesheet" href="/assets/index.4ca8593a.css">
+  <script type="module" crossorigin src="/assets/index.995816f3.js"></script>
+  <link rel="stylesheet" href="/assets/index.b0f18c8e.css">
 </head>
-
 
 <body>
   <div id="app"></div>
   
-</body>
 
+
+<style>
+#notion-sync-btn{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;align-items:center;gap:8px;padding:14px 24px;background:rgba(255,255,255,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:#1d1d1f;border:1px solid rgba(0,0,0,.08);border-radius:16px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 2px 20px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.04);transition:all .25s cubic-bezier(.4,0,.2,1);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;letter-spacing:.3px}
+#notion-sync-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.06);background:rgba(255,255,255,.95)}
+#notion-sync-btn:active{transform:scale(.97);box-shadow:0 2px 12px rgba(0,0,0,.08)}
+#notion-sync-btn .btn-icon{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#007aff,#5856d6);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#notion-sync-btn.syncing .btn-icon{animation:nspin 1.2s linear infinite}
+@keyframes nspin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+#notion-sync-toast{position:fixed;bottom:96px;right:28px;z-index:9999;background:rgba(29,29,31,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:500;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;display:none;box-shadow:0 4px 24px rgba(0,0,0,.15);max-width:300px;word-break:break-all;animation:nfadein .3s}
+@keyframes nfadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+#notion-sync-toast.success{border-left:3px solid #34c759}
+#notion-sync-toast.error{border-left:3px solid #ff3b30}
+#notion-sync-toast.info{border-left:3px solid #007aff}
+</style>
+<button id="notion-sync-btn" onclick="notionSync()">
+<span class="btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg></span>
+<span class="btn-text">同步到 Notion</span>
+</button>
+<div id="notion-sync-toast"></div>
+<script>
+function showToast(msg,type,dur){var t=document.getElementById('notion-sync-toast');t.textContent=msg;t.className='';t.classList.add(type||'info');t.style.display='block';clearTimeout(t._timer);t._timer=setTimeout(function(){t.style.display='none'},dur||3500)}
+function notionSync(){
+  var b=document.getElementById('notion-sync-btn');
+  var txt=b.querySelector('.btn-text');
+  b.disabled=true;b.classList.add('syncing');
+  txt.textContent='同步中...';
+  showToast('开始同步文章到 Notion...','info',2500);
+  fetch('/api/v1/notion/sync',{method:'POST'}).then(function(r){return r.json()}).then(function(d){
+    if(d.status==='busy'){showToast('同步任务运行中，请稍候','info',3000);b.disabled=false;b.classList.remove('syncing');txt.textContent='同步到 Notion';return}
+    var poll=setInterval(function(){
+      fetch('/api/v1/notion/sync/status').then(function(r){return r.json()}).then(function(s){
+          clearInterval(poll);b.disabled=false;b.classList.remove('syncing');txt.textContent='同步到 Notion';
+          if(s.last_result==='no new articles'){showToast('✅ 没有新文章需要同步','success',4000)}
+          else if(s.success>0){showToast('✅ 同步完成：'+s.success+' 篇成功'+(s.failed>0?'，'+s.failed+' 篇失败':''),'success',5000)}
+          else if(s.failed>0){showToast('❌ 同步失败：'+s.failed+' 篇','error',5000)}
+          else{showToast('✅ 同步完成','success',3500)}
+        }
+      })
+    },2500)
+  }).catch(function(e){showToast('❌ 同步失败：'+e,'error',4000);b.disabled=false;b.classList.remove('syncing');txt.textContent='同步到 Notion'})
+}
+</script>
+</body>
 </html>
