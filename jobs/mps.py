@@ -247,7 +247,8 @@ def run(job_id:str=None,isTest=False):
             #添加测试任务
             from core.print import print_warning
             print_warning(f"{task.name} 添加到队列运行")
-            add_job(get_feeds(task),task,isTest=isTest)
+            # 修改：只传递 task，在 add_job 中动态获取 feeds
+            add_job(task=task,isTest=isTest)
             pass
     return tasks
 def start_job(job_id:str=None):
