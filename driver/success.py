@@ -60,15 +60,43 @@ def getLockStatus():
         return WX_LOCKED_STATUS   
          
 def getStatus():
-    """获取登录状态，优先从Redis读取，失败则使用全局变量"""
+    """获取登录状态，优先从Redis读取，失败则使用全局变量，并检查token是否过期"""
     global WX_LOGIN_ED
+    import time
+
     # 尝试从Redis读取
     if redis_client.is_connected:
         try:
             val = redis_client._client.get(REDIS_KEY_STATUS)
-            if val is not None:
-                return val == "1"
-        except Exception:
+            if val is not None and val == "1":
+                # 检查token是否过期
+                token_data = getLoginInfo()
+                if token_data and 'expiry' in token_data and token_data['expiry']:
+                    expiry = token_data['expiry']
+                    # 检查剩余秒数
+                    if 'remaining_seconds' in expiry:
+                        remaining = expiry['remaining_seconds']
+                        if remaining is not None and remaining > 0:
+                            return True
+                        else:
+                            # token已过期，更新状态
+                            print_warning("Token已过期，需要重新登录")
+                            setStatus(False)
+                            return False
+                    # 检查过期时间戳
+                    elif 'expiry_timestamp' in expiry:
+                        expiry_timestamp = expiry['expiry_timestamp']
+                        if expiry_timestamp and expiry_timestamp > time.time():
+                            return True
+                        else:
+                            # token已过期，更新状态
+                            print_warning("Token已过期，需要重新登录")
+                            setStatus(False)
+                            return False
+                # 没有过期信息，但状态为True，暂时返回True
+                return True
+        except Exception as e:
+            print_warning(f"检查登录状态失败: {e}")
             pass
     # 回退到全局变量
     with login_lock:
@@ -106,8 +134,42 @@ def Success(data:dict,ext_data:dict={}):
             setStatus(False)
 
 def CanGetToken():
-    if getStatus() and getLockStatus()==False:
-        return True
-    else:
-        print_warning("当前登录状态无效，无法获取Token")
+    """检查是否可以获取Token，包括检查登录状态、锁定状态和token过期时间"""
+    import time
+
+    # 检查锁定状态
+    if getLockStatus():
+        print_warning("正在切换账号，请等待切换完成")
         return False
+
+    # 检查登录状态
+    if not getStatus():
+        print_warning("当前未登录，请先扫码登录")
+        return False
+
+    # 检查token过期时间
+    token_data = getLoginInfo()
+    if not token_data or not token_data.get('token'):
+        print_warning("Token不存在，请重新登录")
+        setStatus(False)
+        return False
+
+    # 检查过期信息
+    expiry = token_data.get('expiry')
+    if expiry:
+        # 检查剩余秒数
+        if 'remaining_seconds' in expiry:
+            remaining = expiry['remaining_seconds']
+            if remaining is not None and remaining <= 0:
+                print_warning("Token已过期，请重新扫码登录")
+                setStatus(False)
+                return False
+        # 检查过期时间戳
+        elif 'expiry_timestamp' in expiry:
+            expiry_timestamp = expiry['expiry_timestamp']
+            if expiry_timestamp and expiry_timestamp <= time.time():
+                print_warning("Token已过期，请重新扫码登录")
+                setStatus(False)
+                return False
+
+    return True

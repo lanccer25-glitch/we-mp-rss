@@ -24,7 +24,7 @@ def start_auth_service():
         auth_task.clear_all_jobs()
         print("是否开启调试模式:",str(os.getenv('DEBUG',False)))
         if str(os.getenv('DEBUG',False))=="True":
-            auth_task.add_cron_job(auth, "*/2 * * * *",tag="授权定时更新")
+            auth_task.add_cron_job(auth, "*/20 * * * *",tag="授权定时更新")
         else:
             auth_task.add_cron_job(auth, "0 0 */1 * *",tag="授权定时更新")
         auth_task.start()

@@ -37,6 +37,10 @@ export default defineConfig(({ command, mode }) => {
           target: apiTarget,
           changeOrigin: true,
         },
+        "/proxy": {
+          target: apiTarget,
+          changeOrigin: true,
+        },
         "/static": {
           target: apiTarget,
           changeOrigin: true,
